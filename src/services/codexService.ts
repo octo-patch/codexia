@@ -12,7 +12,11 @@ import type {
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
-import { miniMaxReasoningEffort } from '@/components/codex/minimax';
+import {
+  isMiniMaxTextPreset,
+  miniMaxReasoningEffort,
+  miniMaxToolConfig,
+} from '@/components/codex/minimax';
 import {
   useCodexStore,
   useConfigStore,
@@ -27,6 +31,7 @@ import { convertThreadHistoryToEvents } from '@/utils/threadHistoryConverter';
 import {
   threadStart as apiThreadStart,
   gitCreateWorktree,
+  listConfigProviders,
   listThreads,
   skillList,
   threadCompactStart,
@@ -275,6 +280,13 @@ export const codexService = {
         projectState.status === 'ready'
           ? (findProjectForCwd(projectState.projects, cwd)?.id ?? null)
           : null;
+      // Read the effective endpoint; a preset name can point to a custom route.
+      // These per-thread overrides never rewrite the user's saved configuration.
+      let toolConfig = {};
+      if (isMiniMaxTextPreset(modelProvider, model)) {
+        const providers = await listConfigProviders();
+        toolConfig = miniMaxToolConfig(providers.find((p) => p.name === modelProvider)?.base_url);
+      }
       const params: ThreadStartParams = {
         model,
         modelProvider,
@@ -292,6 +304,8 @@ export const codexService = {
           view_image_tool: true,
           // Inject user-configured multi-agent limits.
           ...buildAgentsConfigFragment(),
+          // MiniMax Responses supports function tools, not web_search/namespaces.
+          ...toolConfig,
           // Inject plan mode when selected.
           ...(collaborationMode === 'plan'
             ? {
