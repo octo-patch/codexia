@@ -1,6 +1,7 @@
 import type { ReasoningEffort } from '@/bindings';
 import type { Model } from '@/bindings/v2';
 import { EffortSlider } from '@/components/common/EffortSlider';
+import { isMiniMaxFlash, MINIMAX_FLASH_EFFORTS, miniMaxReasoningEffort } from '../minimax';
 
 export const GENERIC_REASONING_OPTIONS: ReasoningEffort[] = [
   'none',
@@ -20,11 +21,16 @@ export function nextReasoningEffort(
   if (provider === 'openai') {
     return openAiModels.find((m) => m.id === modelId)?.defaultReasoningEffort;
   }
+  if (isMiniMaxFlash(provider, modelId)) {
+    const effort = miniMaxReasoningEffort(provider, modelId, current);
+    return effort === current ? undefined : effort;
+  }
   return current && GENERIC_REASONING_OPTIONS.includes(current) ? undefined : 'medium';
 }
 
 type ReasoningEffortSelectorProps = {
   provider: string;
+  modelId?: string;
   // The selected model when the provider is openai; drives per-model options.
   openAiModel?: Model;
   value: ReasoningEffort;
@@ -34,6 +40,7 @@ type ReasoningEffortSelectorProps = {
 
 export function ReasoningEffortSelector({
   provider,
+  modelId,
   openAiModel,
   value,
   onChange,
@@ -42,7 +49,9 @@ export function ReasoningEffortSelector({
   const options =
     provider === 'openai'
       ? (openAiModel?.supportedReasoningEfforts.map((o) => o.reasoningEffort) ?? [])
-      : GENERIC_REASONING_OPTIONS;
+      : isMiniMaxFlash(provider, modelId)
+        ? MINIMAX_FLASH_EFFORTS
+        : GENERIC_REASONING_OPTIONS;
 
   return (
     <EffortSlider

@@ -12,6 +12,7 @@ import type {
   ThreadStartParams,
   UserInput,
 } from '@/bindings/v2';
+import { miniMaxReasoningEffort } from '@/components/codex/minimax';
 import {
   useCodexStore,
   useConfigStore,
@@ -284,7 +285,7 @@ export const codexService = {
         baseInstructions: null,
         developerInstructions: null,
         config: {
-          model_reasoning_effort: reasoningEffort,
+          model_reasoning_effort: miniMaxReasoningEffort(modelProvider, model, reasoningEffort),
           show_raw_agent_reasoning: false,
           model_reasoning_summary: 'auto',
           web_search_request: webSearchRequest,
@@ -298,7 +299,7 @@ export const codexService = {
                   mode: 'plan',
                   settings: {
                     model,
-                    reasoning_effort: reasoningEffort,
+                    reasoning_effort: miniMaxReasoningEffort(modelProvider, model, reasoningEffort),
                     developer_instructions: null,
                   },
                 },
@@ -362,7 +363,7 @@ export const codexService = {
     try {
       const userInputs = buildUserInputs(input, images);
 
-      const { model, reasoningEffort, approvalPolicy, sandbox, webSearchRequest } =
+      const { model, modelProvider, reasoningEffort, approvalPolicy, sandbox, webSearchRequest } =
         useConfigStore.getState();
 
       const response = await turnStart({
@@ -372,7 +373,7 @@ export const codexService = {
         approvalPolicy,
         sandboxPolicy: sandboxModeToPolicy(sandbox, webSearchRequest),
         model: model || null,
-        effort: reasoningEffort ?? null,
+        effort: miniMaxReasoningEffort(modelProvider, model, reasoningEffort) ?? null,
       });
 
       const preview = getThreadPreviewFromInput(userInputs);
@@ -454,7 +455,18 @@ export const codexService = {
     turnId: string,
     settings: { model?: string; effort?: ReasoningEffort }
   ) {
-    const response = await turnSettingsUpdate({ threadId, turnId, ...settings });
+    const { modelProvider, model, reasoningEffort } = useConfigStore.getState();
+    const effort = miniMaxReasoningEffort(
+      modelProvider,
+      settings.model ?? model,
+      settings.effort ?? reasoningEffort
+    );
+    const response = await turnSettingsUpdate({
+      threadId,
+      turnId,
+      ...settings,
+      ...(effort !== (settings.effort ?? reasoningEffort) ? { effort } : {}),
+    });
     return response.status;
   },
   async turnInterrupt(threadId: string, turnId: string) {

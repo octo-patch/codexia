@@ -374,6 +374,7 @@ function BaseModelSelector({
           {reasoningEffort !== undefined && onReasoningEffortChange && (
             <ReasoningEffortSelector
               provider={provider}
+              modelId={value}
               openAiModel={selectedOpenAiModel}
               value={reasoningEffort}
               onChange={onReasoningEffortChange}
@@ -476,6 +477,7 @@ function BaseModelSelector({
             {reasoningEffort !== undefined && onReasoningEffortChange && (
               <ReasoningEffortSelector
                 provider={provider}
+                modelId={value}
                 openAiModel={selectedOpenAiModel}
                 value={reasoningEffort}
                 onChange={(option) => {

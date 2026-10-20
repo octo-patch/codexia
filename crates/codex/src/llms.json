@@ -67,12 +67,12 @@
       "auto_discover": false,
       "models": [
         {
-          "id": "MiniMax-M3",
+          "id": "MiniMax-M3.1-Flash",
           "context_length": 1000000
         },
         {
-          "id": "MiniMax-M2.7",
-          "context_length": 204800
+          "id": "MiniMax-M3",
+          "context_length": 1000000
         }
       ]
     },
@@ -85,12 +85,12 @@
       "auto_discover": false,
       "models": [
         {
-          "id": "MiniMax-M3",
+          "id": "MiniMax-M3.1-Flash",
           "context_length": 1000000
         },
         {
-          "id": "MiniMax-M2.7",
-          "context_length": 204800
+          "id": "MiniMax-M3",
+          "context_length": 1000000
         }
       ]
     },
